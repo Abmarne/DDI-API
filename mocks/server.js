@@ -141,7 +141,10 @@ function getMockDataForType(typeOfObject) {
     'CodeList': 'code-lists.json',
     'CodeListScheme': 'code-list-schemes.json',
     'CategoryScheme': 'category-schemes.json',
-    'Category': 'categories.json'
+    'Category': 'categories.json',
+    'StudyUnit': 'study-units.json',
+    'PhysicalInstance': 'physical-instances.json',
+    'DataSet': 'datasets.json'
   };
   return typeMap[typeOfObject] || null;
 }
@@ -152,7 +155,8 @@ function getTypeForSchemeChildren(propertyName) {
     'concepts': 'Concept',
     'variables': 'Variable',
     'codeLists': 'CodeList',
-    'categories': 'Category'
+    'categories': 'Category',
+    'dataSets': 'DataSet'
   };
   return typeMap[propertyName] || null;
 }
@@ -644,6 +648,96 @@ app.get('/ddi/v1/category-schemes/:categorySchemeID', (req, res) => {
   }
 });
 
+// Study Units endpoints
+app.get('/ddi/v1/study-units', (req, res) => {
+  const references = req.query.references || 'none';
+  let data = loadMock('study-units.json');
+  
+  // Apply filters
+  data = filterData(data, req.query);
+  
+  // Resolve references if requested
+  if (data && references !== 'none') {
+    const resolved = data.map(item => resolveReferences(item, references));
+    sendResponse(req, res, resolved, 'studyUnits');
+  } else {
+    sendResponse(req, res, data || [], 'studyUnits');
+  }
+});
+
+app.get('/ddi/v1/study-units/:studyUnitID', (req, res) => {
+  const { studyUnitID } = req.params;
+  const references = req.query.references || 'none';
+  const data = loadMock('study-units.json');
+  const studyUnit = findById(data, studyUnitID);
+  if (studyUnit) {
+    const resolved = resolveReferences(studyUnit, references);
+    sendResponse(req, res, resolved, 'studyUnit');
+  } else {
+    res.status(404).json({ error: 'Study unit not found' });
+  }
+});
+
+// Physical Instances endpoints
+app.get('/ddi/v1/physical-instances', (req, res) => {
+  const references = req.query.references || 'none';
+  let data = loadMock('physical-instances.json');
+  
+  // Apply filters
+  data = filterData(data, req.query);
+  
+  // Resolve references if requested
+  if (data && references !== 'none') {
+    const resolved = data.map(item => resolveReferences(item, references));
+    sendResponse(req, res, resolved, 'physicalInstances');
+  } else {
+    sendResponse(req, res, data || [], 'physicalInstances');
+  }
+});
+
+app.get('/ddi/v1/physical-instances/:physicalInstanceID', (req, res) => {
+  const { physicalInstanceID } = req.params;
+  const references = req.query.references || 'none';
+  const data = loadMock('physical-instances.json');
+  const physicalInstance = findById(data, physicalInstanceID);
+  if (physicalInstance) {
+    const resolved = resolveReferences(physicalInstance, references);
+    sendResponse(req, res, resolved, 'physicalInstance');
+  } else {
+    res.status(404).json({ error: 'Physical instance not found' });
+  }
+});
+
+// Datasets endpoints
+app.get('/ddi/v1/datasets', (req, res) => {
+  const references = req.query.references || 'none';
+  let data = loadMock('datasets.json');
+  
+  // Apply filters
+  data = filterData(data, req.query);
+  
+  // Resolve references if requested
+  if (data && references !== 'none') {
+    const resolved = data.map(item => resolveReferences(item, references));
+    sendResponse(req, res, resolved, 'dataSets');
+  } else {
+    sendResponse(req, res, data || [], 'dataSets');
+  }
+});
+
+app.get('/ddi/v1/datasets/:datasetID', (req, res) => {
+  const { datasetID } = req.params;
+  const references = req.query.references || 'none';
+  const data = loadMock('datasets.json');
+  const dataset = findById(data, datasetID);
+  if (dataset) {
+    const resolved = resolveReferences(dataset, references);
+    sendResponse(req, res, resolved, 'dataSet');
+  } else {
+    res.status(404).json({ error: 'Dataset not found' });
+  }
+});
+
 // Search endpoint - Search by labels
 app.get('/ddi/v1/search/labels', (req, res) => {
   const query = req.query.q;
@@ -810,6 +904,18 @@ app.get('/', (req, res) => {
       categorySchemes: {
         list: '/ddi/v1/category-schemes',
         item: '/ddi/v1/category-schemes/{categorySchemeID}'
+      },
+      studyUnits: {
+        list: '/ddi/v1/study-units',
+        item: '/ddi/v1/study-units/{studyUnitID}'
+      },
+      physicalInstances: {
+        list: '/ddi/v1/physical-instances',
+        item: '/ddi/v1/physical-instances/{physicalInstanceID}'
+      },
+      dataSets: {
+        list: '/ddi/v1/datasets',
+        item: '/ddi/v1/datasets/{datasetID}'
       }
     },
     documentation: {
